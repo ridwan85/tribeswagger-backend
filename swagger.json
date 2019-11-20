@@ -2,14 +2,14 @@
   "swagger": "2.0",
   "info": {
     "version": "1.0.0",
-    "title": "Yet Another Node.js Blogg Application API",
-    "description": "Yet Another Node.js Blogg Application API",
+    "title": "Nodejs Swagger for TribeHired Test",
+    "description": "Nodejs Swagger for TribeHired Test",
     "license": {
       "name": "MIT",
       "url": "https://opensource.org/licenses/MIT"
     }
   },
-  "host": "localhost:3000",
+  "host": "204.48.24.199:3000",
   "basePath": "/api/v1",
   "tags": [
     {
