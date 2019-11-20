@@ -7,7 +7,9 @@ const express = require("express"),
   bodyParser = require("body-parser"),
   swaggerUi = require("swagger-ui-express"),
   swaggerDocument = require("./swagger.json"),
+  session = require("express-session"),
   passport = require("passport"),
+  LocalStrategy = require("passport-local"),
   crypto = require("crypto");
 
 var mongoose = require("mongoose"),
@@ -50,8 +52,7 @@ UserSchema.methods.validatePassword = function(password) {
 mongoose.model("User", UserSchema);
 var User = require("mongoose").model("User");
 
-var app = express();
-
+const app = express();
 //rest API requirements
 app.use(
   bodyParser.urlencoded({
@@ -59,6 +60,19 @@ app.use(
   })
 );
 app.use(bodyParser.json());
+app.use(
+  session({
+    secret: "tribe-secret",
+    cookie: { maxAge: 60000 },
+    resave: false,
+    saveUninitialized: false
+  })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+require("./config/passport");
 
 var health = function(req, res, next) {
   return res.send({
@@ -106,9 +120,8 @@ var createUser = function(req, res, next) {
 };
 
 var loginUser = function(req, res, next) {
-  const {
-    body: { user }
-  } = req;
+  var user = req.body;
+  console.log(user);
 
   if (!user.email) {
     return res.status(422).json({
@@ -128,20 +141,24 @@ var loginUser = function(req, res, next) {
 
   return passport.authenticate(
     "local",
-    { session: false },
+    { session: true },
     (err, passportUser, info) => {
       if (err) {
+        console.log(err);
         return next(err);
       }
 
       if (passportUser) {
         const user = passportUser;
-        user.token = passportUser.generateJWT();
 
-        return res.json({ user: user.toAuthJSON() });
+        return res.json({ user: user });
       }
 
-      return status(400).info;
+      return res.status(400).json({
+        errors: {
+          login: "error occured"
+        }
+      });
     }
   )(req, res, next);
 };
