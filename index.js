@@ -7,6 +7,7 @@ const express = require("express"),
   bodyParser = require("body-parser"),
   swaggerUi = require("swagger-ui-express"),
   swaggerDocument = require("./swagger.json"),
+  passport = require("passport"),
   crypto = require("crypto");
 
 var mongoose = require("mongoose"),
@@ -104,6 +105,47 @@ var createUser = function(req, res, next) {
   });
 };
 
+var loginUser = function(req, res, next) {
+  const {
+    body: { user }
+  } = req;
+
+  if (!user.email) {
+    return res.status(422).json({
+      errors: {
+        email: "is required"
+      }
+    });
+  }
+
+  if (!user.password) {
+    return res.status(422).json({
+      errors: {
+        password: "is required"
+      }
+    });
+  }
+
+  return passport.authenticate(
+    "local",
+    { session: false },
+    (err, passportUser, info) => {
+      if (err) {
+        return next(err);
+      }
+
+      if (passportUser) {
+        const user = passportUser;
+        user.token = passportUser.generateJWT();
+
+        return res.json({ user: user.toAuthJSON() });
+      }
+
+      return status(400).info;
+    }
+  )(req, res, next);
+};
+
 var updateUser = function(req, res, next) {
   User.findByIdAndUpdate(req.body._id, req.body, { new: true }, function(
     err,
@@ -153,6 +195,7 @@ var getByIdUser = function(req, res, next, id) {
 };
 
 router.route("/").get(health);
+router.route("/login").post(loginUser);
 
 router
   .route("/users")
